@@ -8,9 +8,9 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI } from "@google/genai";
 import { ExperimentWorkspace } from './components/experiment-workspace';
-// Add comment above fix: Import Badge and Button components used in the UI
 import { Badge } from './components/ui/badge';
 import { Button } from './components/ui/button';
+import { EnkiLiveTerminal } from './components/enki-live-terminal';
 
 const COLORS = {
   bg: '#010409',
@@ -40,7 +40,7 @@ interface ResearchExperiment {
   domain: string;
   name: string;
   status: 'operational' | 'research' | 'validation';
-  clade: 'METABOLIC' | 'TRANSDUCTIVE' | 'DEFENSIVE' | 'COGNITIVE';
+  clade: 'METABOLIC' | 'TRANSDUCTIVE' | 'DEFENSIVE' | 'COGNITIVE' | 'SPECTRA';
   phi?: number;
   lambda?: number;
   gamma?: number;
@@ -54,10 +54,10 @@ const FERMI_CONFIG = {
     { id: 'hardware', name: 'Hardware Substrate', icon: '⚡', desc: 'QICK/Qblox/IBM' }
   ],
   ORGANISMS: [
+    { domain: 'Transmutation', name: 'SPECTRA_COAL_ASH', status: 'research', clade: 'SPECTRA', backend: 'PHASE_CONJUGATE_REACTOR' },
     { domain: 'Orchestration', name: 'ADAPTIVE_AAF_V5', status: 'operational', clade: 'COGNITIVE', backend: 'IBM_TORINO' },
     { domain: 'Bridge', name: 'OSIRIS_SYNC_77', status: 'research', clade: 'TRANSDUCTIVE', backend: 'QBLOX_CLUSTER_01' },
     { domain: 'Hardware', name: 'SRF_CAVITY_RESONANCE', status: 'validation', clade: 'METABOLIC', backend: 'FERMI_PIP_II' },
-    { domain: 'Orchestration', name: 'PHOENIX_REPAIR_LCC', status: 'operational', clade: 'DEFENSIVE', backend: 'SIMULATOR' },
   ] as ResearchExperiment[]
 };
 
@@ -123,58 +123,6 @@ const styles = {
   }
 };
 
-function GlobalManifoldMesh() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let frame = 0;
-    const draw = () => {
-      frame++;
-      const { width, height } = canvas;
-      ctx.clearRect(0, 0, width, height);
-      
-      // Draw 11D Lattice
-      ctx.strokeStyle = '#161b22';
-      ctx.lineWidth = 1;
-      const spacing = 40;
-      for(let x = 0; x < width; x += spacing) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
-      }
-      for(let y = 0; y < height; y += spacing) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
-      }
-
-      // Draw Coherence Waves
-      ctx.strokeStyle = `${COLORS.cyan}33`;
-      ctx.beginPath();
-      for(let x = 0; x < width; x += 5) {
-        const y = height/2 + Math.sin(x * 0.01 + frame * 0.05) * 50 * Math.sin(frame * 0.01);
-        if(x === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-
-      requestAnimationFrame(draw);
-    };
-
-    const handleResize = () => {
-      canvas.width = canvas.parentElement?.clientWidth || 800;
-      canvas.height = canvas.parentElement?.clientHeight || 600;
-    };
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    draw();
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  return <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0 }} />;
-}
-
 function App() {
   const [selectedExpt, setSelectedExpt] = useState<ResearchExperiment | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -187,6 +135,7 @@ function App() {
   useEffect(() => {
     addLog("FERMI Lab Workspace Initialized. 11D-CRSM Manifold active.", "success");
     addLog("Coupling with ibm_torino established (Λ=0.923).", "info");
+    addLog("Project SPECTRA loaded: Awaiting coal-ash ionization.", "info");
   }, []);
 
   return (
@@ -219,6 +168,8 @@ function App() {
         <span>BACKENDS: 4/4 LINKED</span>
         <span style={{ color: COLORS.gray }}>|</span>
         <span>THETA_LOCK: 51.843°</span>
+        <span style={{ color: COLORS.gray }}>|</span>
+        <span style={{ color: COLORS.gold }}>Ξ EFFICIENCY: 194.03%</span>
       </div>
 
       <div style={styles.main}>
@@ -243,7 +194,7 @@ function App() {
 
           <div style={{ marginTop: 'auto' }}>
             <h3 style={{ fontSize: '11px', fontWeight: 800, color: COLORS.gray, marginBottom: '12px' }}>EVENT LOG</h3>
-            <div style={{ height: '200px', background: '#010409', borderRadius: '4px', padding: '12px', fontSize: '10px', overflowY: 'auto', fontFamily: 'monospace' }}>
+            <div className="custom-scrollbar" style={{ height: '200px', background: '#010409', borderRadius: '4px', padding: '12px', fontSize: '10px', overflowY: 'auto', fontFamily: 'monospace' }}>
               {logs.map((l, i) => (
                 <div key={i} style={{ marginBottom: '4px', color: l.severity === 'success' ? COLORS.emerald : l.severity === 'warning' ? COLORS.gold : l.severity === 'error' ? COLORS.alert : COLORS.cyan }}>
                   <span style={{ opacity: 0.4 }}>[{l.timestamp.toLocaleTimeString()}]</span> {l.message}
@@ -254,16 +205,16 @@ function App() {
         </aside>
 
         <main style={styles.workspace}>
-          <GlobalManifoldMesh />
+          <EnkiLiveTerminal />
           <div style={{ position: 'absolute', top: '40px', left: '40px', zIndex: 1 }}>
-            <h2 style={{ fontSize: '32px', fontWeight: 900, margin: 0 }}>11D-CRSM</h2>
+            <h2 style={{ fontSize: '32px', fontWeight: 900, margin: 0, textShadow: '0 0 20px rgba(57, 197, 187, 0.4)' }}>11D-CRSM</h2>
             <p style={{ color: COLORS.gray, margin: '4px 0 0 0', maxWidth: '400px', fontSize: '14px' }}>
-              Autonomous Cooperative Multi-Swarm Management Layer. 
-              Sit above pulse generators to orchestrate complex quantum-biological interactions.
+              Programmable Reality Substrate.
+              Coordinating distributed compute engines to manifest specific world-states.
             </p>
           </div>
           
-          <div style={{ position: 'absolute', bottom: '40px', right: '40px', textAlign: 'right' }}>
+          <div style={{ position: 'absolute', bottom: '40px', right: '40px', textAlign: 'right', zIndex: 1 }}>
             <div style={{ fontSize: '12px', color: COLORS.gold, fontWeight: 700 }}>AXIOM U := L[U]</div>
             <div style={{ fontSize: '10px', color: COLORS.gray }}>Universally Recursive Lagrangian active</div>
           </div>
